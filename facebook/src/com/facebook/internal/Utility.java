@@ -91,6 +91,8 @@ public final class Utility {
 
     private static AsyncTask<Void, Void, GraphObject> initialAppSettingsLoadTask;
 
+    private static String overridedApplicationId;
+
     public static class FetchedAppSettings {
         private boolean supportsAttribution;
         private boolean supportsImplicitLogging;
@@ -469,6 +471,19 @@ public final class Utility {
         Validate.notNull(context, "context");
 
         Settings.loadDefaultsFromMetadata(context);
+
+        if (overridedApplicationId != null)
+            return overridedApplicationId;
+
+        try {
+            ApplicationInfo ai = context.getPackageManager().getApplicationInfo(
+                    context.getPackageName(), PackageManager.GET_META_DATA);
+            if (ai.metaData != null) {
+                return ai.metaData.getString(Session.APPLICATION_ID_PROPERTY);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            // if we can't find it in the manifest, just return null
+        }
 
         return Settings.getApplicationId();
     }
@@ -915,5 +930,9 @@ public final class Utility {
         } else {
             return context.getClass().getSimpleName();
         }
+    }
+
+    public static void setApplicationId(String applicationId) {
+        overridedApplicationId = applicationId;
     }
 }
